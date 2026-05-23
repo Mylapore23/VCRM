@@ -1,0 +1,233 @@
+import { useState, useMemo } from 'react';
+import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useApp } from '../context/AppContext';
+import { USERS, userById } from '../config/users';
+import { STAGES, PRIORITIES, StageBadge, PriorityBadge } from '../components/Badges';
+import IntelPanel from '../components/IntelPanel';
+import PitchEditor from '../components/PitchEditor';
+import { useAnthropicAI } from '../hooks/useAnthropicAI';
+
+const TABS = ['Overview', 'Intel', 'Pitch', 'Content'];
+
+export default function LeadDetail() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const { data, updateLead, deleteLead, addPitch, updatePitch, currentUser, deletePitch } = useApp();
+  const lead = data.leads.find(l => l.id === id);
+  const [tab, setTab] = useState('Overview');
+
+  if (!lead) {
+    return (
+      <div className="max-w-4xl mx-auto p-6">
+        <p>Lead not found. <Link to="/leads" className="text-blue-600">Back to leads</Link></p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-7xl mx-auto px-6 py-6">
+      <button onClick={() => navigate('/leads')} className="text-sm text-slate-500 hover:text-slate-700 mb-3">← All leads</button>
+      <div className="flex items-start justify-between mb-1 gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">{lead.company}</h1>
+          <div className="flex items-center gap-2 mt-2">
+            <StageBadge stage={lead.stage} />
+            <PriorityBadge priority={lead.priority} />
+            <span className="text-sm text-slate-500">· {lead.contact} · Owner: {userById(lead.owner)?.name}</span>
+          </div>
+        </div>
+        <button
+          onClick={() => { if (confirm('Delete this lead?')) { deleteLead(lead.id); navigate('/leads'); } }}
+          className="text-sm text-red-600 hover:text-red-800"
+        >
+          Delete
+        </button>
+      </div>
+
+      <div className="border-b border-slate-200 mt-6 mb-6">
+        <div className="flex gap-1">
+          {TABS.map(t => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${tab === t ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-800'}`}
+            >
+              {t}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {tab === 'Overview' && <OverviewTab lead={lead} updateLead={updateLead} />}
+      {tab === 'Intel' && <IntelPanel lead={lead} />}
+      {tab === 'Pitch' && (
+        <PitchTab
+          lead={lead}
+          pitches={data.pitchDocs.filter(p => p.leadId === lead.id)}
+          addPitch={addPitch}
+          updatePitch={updatePitch}
+          deletePitch={deletePitch}
+          currentUser={currentUser}
+        />
+      )}
+      {tab === 'Content' && <ContentTab content={data.contentRepo} />}
+    </div>
+  );
+}
+
+function OverviewTab({ lead, updateLead }) {
+  const [form, setForm] = useState({
+    company: lead.company,
+    contact: lead.contact || '',
+    contactEmail: lead.contactEmail || '',
+    stage: lead.stage,
+    priority: lead.priority,
+    value: lead.value || '',
+    owner: lead.owner,
+    tags: (lead.tags || []).join(', '),
+  });
+  const [saved, setSaved] = useState(false);
+  const set = (k, v) => { setForm(f => ({ ...f, [k]: v })); setSaved(false); };
+
+  const save = () => {
+    updateLead(lead.id, {
+      ...form,
+      value: form.value ? Number(form.value) : undefined,
+      tags: form.tags.split(',').map(t => t.trim()).filter(Boolean),
+    });
+    setSaved(true);
+  };
+
+  const cls = 'w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:border-blue-500 focus:outline-none';
+
+  return (
+    <div className="bg-white border border-slate-200 rounded-lg p-6 max-w-2xl">
+      <div className="grid grid-cols-2 gap-4">
+        <L label="Company"><input value={form.company} onChange={e => set('company', e.target.value)} className={cls} /></L>
+        <L label="Contact"><input value={form.contact} onChange={e => set('contact', e.target.value)} className={cls} /></L>
+        <L label="Email"><input value={form.contactEmail} onChange={e => set('contactEmail', e.target.value)} className={cls} /></L>
+        <L label="Value ($)"><input type="number" value={form.value} onChange={e => set('value', e.target.value)} className={cls} /></L>
+        <L label="Stage">
+          <select value={form.stage} onChange={e => set('stage', e.target.value)} className={cls}>
+            {STAGES.map(s => <option key={s}>{s}</option>)}
+          </select>
+        </L>
+        <L label="Priority">
+          <select value={form.priority} onChange={e => set('priority', e.target.value)} className={cls}>
+            {PRIORITIES.map(p => <option key={p}>{p}</option>)}
+          </select>
+        </L>
+        <L label="Owner">
+          <select value={form.owner} onChange={e => set('owner', e.target.value)} className={cls}>
+            {USERS.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
+          </select>
+        </L>
+        <L label="Tags"><input value={form.tags} onChange={e => set('tags', e.target.value)} className={cls} placeholder="comma, separated" /></L>
+      </div>
+      <div className="flex items-center gap-3 mt-6">
+        <button onClick={save} className="px-4 py-2 bg-blue-600 text-white rounded-md font-medium hover:bg-blue-700">Save</button>
+        {saved && <span className="text-sm text-green-600">Saved ✓</span>}
+      </div>
+    </div>
+  );
+}
+
+function L({ label, children }) {
+  return <label className="block"><span className="text-xs font-medium text-slate-600">{label}</span><div className="mt-1">{children}</div></label>;
+}
+
+function PitchTab({ lead, pitches, addPitch, updatePitch, deletePitch, currentUser }) {
+  const [selectedId, setSelectedId] = useState(pitches[0]?.id || '');
+  const [generating, setGenerating] = useState(false);
+  const [error, setError] = useState('');
+  const { generatePitchOutline } = useAnthropicAI();
+  const selected = pitches.find(p => p.id === selectedId);
+
+  const createNew = async (auto) => {
+    setError('');
+    let content = `# Pitch for ${lead.company}\n\n## Problem\n\n## Why Now\n\n## Voltara Fit\n\n## Recommended Next Steps\n`;
+    if (auto) {
+      setGenerating(true);
+      try {
+        content = await generatePitchOutline(lead, lead.notes);
+      } catch (e) {
+        setError(e.message);
+        setGenerating(false);
+        return;
+      }
+      setGenerating(false);
+    }
+    const p = addPitch({
+      leadId: lead.id,
+      title: `${lead.company} pitch`,
+      content,
+      author: currentUser.id,
+    });
+    setSelectedId(p.id);
+  };
+
+  return (
+    <div>
+      <div className="flex flex-wrap items-center gap-3 mb-4">
+        <select value={selectedId} onChange={e => setSelectedId(e.target.value)} className="px-3 py-2 border border-slate-300 rounded-md text-sm bg-white">
+          <option value="">— Select pitch —</option>
+          {pitches.map(p => <option key={p.id} value={p.id}>{p.title}</option>)}
+        </select>
+        <button onClick={() => createNew(false)} className="px-3 py-2 bg-slate-100 hover:bg-slate-200 rounded-md text-sm border border-slate-300">+ Blank Pitch</button>
+        <button
+          onClick={() => createNew(true)}
+          disabled={generating}
+          className="px-3 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 disabled:bg-slate-300"
+        >
+          {generating ? 'Drafting...' : '✨ AI Draft Pitch'}
+        </button>
+        {selected && (
+          <button onClick={() => { if (confirm('Delete pitch?')) { deletePitch(selected.id); setSelectedId(''); } }} className="text-sm text-red-600 hover:text-red-800 ml-auto">Delete</button>
+        )}
+      </div>
+      {error && <p className="text-red-600 text-sm mb-3">{error}</p>}
+      {selected ? (
+        <PitchEditor
+          pitch={selected}
+          onSave={(patch) => updatePitch(selected.id, patch)}
+        />
+      ) : (
+        <p className="text-slate-400 text-sm">No pitch selected. Create one above.</p>
+      )}
+    </div>
+  );
+}
+
+function ContentTab({ content }) {
+  const [q, setQ] = useState('');
+  const filtered = useMemo(
+    () => content.filter(c => !q || c.title.toLowerCase().includes(q.toLowerCase()) || (c.tags || []).join(' ').toLowerCase().includes(q.toLowerCase())),
+    [content, q]
+  );
+  const copy = (item) => {
+    navigator.clipboard.writeText(item.content);
+    alert(`"${item.title}" copied to clipboard. Paste into your pitch editor.`);
+  };
+  return (
+    <div>
+      <input
+        value={q}
+        onChange={e => setQ(e.target.value)}
+        placeholder="Search content library..."
+        className="w-full max-w-md px-3 py-2 border border-slate-300 rounded-md text-sm mb-4"
+      />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        {filtered.map(c => (
+          <div key={c.id} className="bg-white border border-slate-200 rounded-lg p-4">
+            <div className="flex items-start justify-between gap-2 mb-2">
+              <div className="font-medium text-slate-900">{c.title}</div>
+              <span className="text-xs px-2 py-0.5 bg-slate-100 rounded">{c.type}</span>
+            </div>
+            <p className="text-xs text-slate-500 line-clamp-2">{c.content.slice(0, 120)}</p>
+            <button onClick={() => copy(c)} className="mt-3 text-xs text-blue-600 hover:underline">Insert into Pitch</button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}

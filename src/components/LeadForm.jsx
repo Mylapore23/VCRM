@@ -1,0 +1,82 @@
+import { useState } from 'react';
+import { USERS } from '../config/users';
+import { STAGES, PRIORITIES } from './Badges';
+
+export default function LeadForm({ initial, onSave, onCancel }) {
+  const [form, setForm] = useState(() => ({
+    company: '',
+    contact: '',
+    contactEmail: '',
+    stage: 'Prospect',
+    priority: 'Medium',
+    value: '',
+    owner: USERS[0].id,
+    tags: '',
+    ...initial,
+    tags: Array.isArray(initial?.tags) ? initial.tags.join(', ') : (initial?.tags || ''),
+  }));
+
+  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+
+  const submit = (e) => {
+    e.preventDefault();
+    if (!form.company.trim()) return;
+    onSave({
+      ...form,
+      value: form.value ? Number(form.value) : undefined,
+      tags: form.tags.split(',').map(t => t.trim()).filter(Boolean),
+    });
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" onClick={onCancel}>
+      <form
+        onSubmit={submit}
+        onClick={e => e.stopPropagation()}
+        className="bg-white rounded-xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto"
+      >
+        <h3 className="text-lg font-semibold mb-4">{initial?.id ? 'Edit Lead' : 'Add Lead'}</h3>
+        <div className="space-y-3">
+          <Field label="Company *"><input required value={form.company} onChange={e => set('company', e.target.value)} className={inputCls} /></Field>
+          <Field label="Contact"><input value={form.contact} onChange={e => set('contact', e.target.value)} className={inputCls} /></Field>
+          <Field label="Contact Email"><input type="email" value={form.contactEmail} onChange={e => set('contactEmail', e.target.value)} className={inputCls} /></Field>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Stage">
+              <select value={form.stage} onChange={e => set('stage', e.target.value)} className={inputCls}>
+                {STAGES.map(s => <option key={s}>{s}</option>)}
+              </select>
+            </Field>
+            <Field label="Priority">
+              <select value={form.priority} onChange={e => set('priority', e.target.value)} className={inputCls}>
+                {PRIORITIES.map(p => <option key={p}>{p}</option>)}
+              </select>
+            </Field>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Value ($)"><input type="number" value={form.value} onChange={e => set('value', e.target.value)} className={inputCls} /></Field>
+            <Field label="Owner">
+              <select value={form.owner} onChange={e => set('owner', e.target.value)} className={inputCls}>
+                {USERS.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
+              </select>
+            </Field>
+          </div>
+          <Field label="Tags (comma-separated)"><input value={form.tags} onChange={e => set('tags', e.target.value)} className={inputCls} /></Field>
+        </div>
+        <div className="flex justify-end gap-2 mt-6">
+          <button type="button" onClick={onCancel} className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-md">Cancel</button>
+          <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Save</button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+const inputCls = 'w-full px-3 py-2 border border-slate-300 rounded-md focus:border-blue-500 focus:outline-none text-sm';
+function Field({ label, children }) {
+  return (
+    <label className="block">
+      <span className="text-xs font-medium text-slate-600">{label}</span>
+      <div className="mt-1">{children}</div>
+    </label>
+  );
+}
