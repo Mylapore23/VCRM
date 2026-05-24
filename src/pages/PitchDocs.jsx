@@ -4,9 +4,11 @@ import { useApp } from '../context/AppContext';
 import { userById } from '../config/users';
 
 export default function PitchDocs() {
-  const { data } = useApp();
+  const { data, visibleLeads } = useApp();
   const navigate = useNavigate();
   const [picking, setPicking] = useState(false);
+  const visibleLeadIds = new Set(visibleLeads.map(l => l.id));
+  const pitches = data.pitchDocs.filter(p => visibleLeadIds.has(p.leadId));
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-6">
@@ -25,10 +27,10 @@ export default function PitchDocs() {
             </tr>
           </thead>
           <tbody>
-            {data.pitchDocs.length === 0 && (
+            {pitches.length === 0 && (
               <tr><td colSpan={4} className="px-4 py-10 text-center text-slate-400">No pitches yet.</td></tr>
             )}
-            {data.pitchDocs.map(p => {
+            {pitches.map(p => {
               const lead = data.leads.find(l => l.id === p.leadId);
               return (
                 <tr
@@ -52,7 +54,7 @@ export default function PitchDocs() {
           <div className="bg-white rounded-xl p-6 w-full max-w-md max-h-[80vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
             <h3 className="text-lg font-semibold mb-4">Select a company</h3>
             <div className="space-y-1">
-              {data.leads.map(l => (
+              {visibleLeads.map(l => (
                 <Link
                   key={l.id}
                   to={`/leads/${l.id}`}

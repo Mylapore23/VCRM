@@ -26,7 +26,7 @@ export default function ContentCard({ item, onEdit, onDelete }) {
         </div>
         <div className="flex gap-3 text-xs mt-auto">
           <button onClick={onEdit} className="text-blue-600 hover:underline">Edit</button>
-          <button onClick={onDelete} className="text-red-600 hover:underline">Delete</button>
+          {onDelete && <button onClick={onDelete} className="text-red-600 hover:underline">Delete</button>}
         </div>
       </div>
       {open && (

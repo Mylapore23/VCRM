@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { USERS } from '../config/users';
 import { STAGES, PRIORITIES } from './Badges';
+import { canAssignVisibility, canViewFinancials } from '../utils/permissions';
 
-export default function LeadForm({ initial, onSave, onCancel }) {
+export default function LeadForm({ initial, onSave, onCancel, currentUser }) {
   const [form, setForm] = useState(() => ({
     company: '',
     contact: '',
@@ -10,13 +11,18 @@ export default function LeadForm({ initial, onSave, onCancel }) {
     stage: 'Prospect',
     priority: 'Medium',
     value: '',
-    owner: USERS[0].id,
+    owner: currentUser?.id || USERS[0].id,
     tags: '',
     ...initial,
     tags: Array.isArray(initial?.tags) ? initial.tags.join(', ') : (initial?.tags || ''),
+    visibility: initial?.visibility || [],
   }));
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+  const toggleVis = (role) => setForm(f => ({
+    ...f,
+    visibility: f.visibility.includes(role) ? f.visibility.filter(r => r !== role) : [...f.visibility, role],
+  }));
 
   const submit = (e) => {
     e.preventDefault();
@@ -27,6 +33,9 @@ export default function LeadForm({ initial, onSave, onCancel }) {
       tags: form.tags.split(',').map(t => t.trim()).filter(Boolean),
     });
   };
+
+  const showFinancials = canViewFinancials(currentUser);
+  const showVisibility = canAssignVisibility(currentUser);
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" onClick={onCancel}>
@@ -53,7 +62,7 @@ export default function LeadForm({ initial, onSave, onCancel }) {
             </Field>
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Value ($)"><input type="number" value={form.value} onChange={e => set('value', e.target.value)} className={inputCls} /></Field>
+            {showFinancials && <Field label="Value ($)"><input type="number" value={form.value} onChange={e => set('value', e.target.value)} className={inputCls} /></Field>}
             <Field label="Owner">
               <select value={form.owner} onChange={e => set('owner', e.target.value)} className={inputCls}>
                 {USERS.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
@@ -61,6 +70,19 @@ export default function LeadForm({ initial, onSave, onCancel }) {
             </Field>
           </div>
           <Field label="Tags (comma-separated)"><input value={form.tags} onChange={e => set('tags', e.target.value)} className={inputCls} /></Field>
+          {showVisibility && (
+            <div className="border-t border-slate-200 pt-3">
+              <span className="text-xs font-medium text-slate-600">Visible to (admin only)</span>
+              <div className="flex gap-3 mt-2">
+                {['sales', 'marketing'].map(role => (
+                  <label key={role} className="flex items-center gap-2 text-sm capitalize">
+                    <input type="checkbox" checked={form.visibility.includes(role)} onChange={() => toggleVis(role)} />
+                    {role}
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
         <div className="flex justify-end gap-2 mt-6">
           <button type="button" onClick={onCancel} className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-md">Cancel</button>

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { USERS, initials } from '../config/users';
 import { useApp } from '../context/AppContext';
+import { RoleBadge } from '../components/Badges';
 
 export default function Login() {
   const { login } = useApp();
@@ -42,9 +43,9 @@ export default function Login() {
                   <div className="w-9 h-9 rounded-full bg-blue-500 text-white flex items-center justify-center font-semibold">
                     {initials(u.name)}
                   </div>
-                  <div className="text-left">
+                  <div className="text-left flex-1">
                     <div className="font-medium text-slate-900">{u.name}</div>
-                    <div className="text-xs text-slate-500">{u.role}</div>
+                    <div className="mt-1"><RoleBadge role={u.role} /></div>
                   </div>
                 </button>
               ))}

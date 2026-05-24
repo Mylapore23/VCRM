@@ -115,5 +115,22 @@ Draft a starter pitch outline in markdown.`;
     return extractText(response) || '# Pitch outline\n\n(AI returned no content.)';
   }, []);
 
-  return { fetchWebIntel, generatePitchOutline };
+  const synthesizeLessons = useCallback(async (lead, lessonsLearnt) => {
+    const system = `You are a GTM strategist. Given the outcome, pros, cons, and recommendations from a completed sales opportunity, write a concise 3-4 sentence synthesis that captures the key learning for the team. Be direct and actionable.`;
+    const payload = {
+      company: lead.company,
+      stage: lead.stage,
+      outcome: lessonsLearnt.outcome,
+      pros: (lessonsLearnt.pros || []).map(p => p.text),
+      cons: (lessonsLearnt.cons || []).map(c => c.text),
+      recommendations: lessonsLearnt.recommendations,
+    };
+    const response = await callClaude({
+      system,
+      messages: [{ role: 'user', content: `Synthesise the key learning from this opportunity:\n\n${JSON.stringify(payload, null, 2)}` }],
+    });
+    return extractText(response) || 'No synthesis generated.';
+  }, []);
+
+  return { fetchWebIntel, generatePitchOutline, synthesizeLessons };
 }

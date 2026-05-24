@@ -2,12 +2,13 @@ import { useState, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { USERS, userById } from '../config/users';
-import { STAGES, PRIORITIES, StageBadge, PriorityBadge } from '../components/Badges';
+import { STAGES, PRIORITIES, StageBadge, PriorityBadge, LessonStatusBadge } from '../components/Badges';
 import IntelPanel from '../components/IntelPanel';
 import PitchEditor from '../components/PitchEditor';
+import VisibilityPanel from '../components/VisibilityPanel';
+import LessonsPanel from '../components/LessonsPanel';
 import { useAnthropicAI } from '../hooks/useAnthropicAI';
-
-const TABS = ['Overview', 'Intel', 'Pitch', 'Content'];
+import { canEdit, canDelete, canView, canViewFinancials } from '../utils/permissions';
 
 export default function LeadDetail() {
   const { id } = useParams();
@@ -16,13 +17,16 @@ export default function LeadDetail() {
   const lead = data.leads.find(l => l.id === id);
   const [tab, setTab] = useState('Overview');
 
-  if (!lead) {
+  if (!lead || !canView(lead, currentUser)) {
     return (
       <div className="max-w-4xl mx-auto p-6">
-        <p>Lead not found. <Link to="/leads" className="text-blue-600">Back to leads</Link></p>
+        <p>Lead not found or you don't have access. <Link to="/leads" className="text-blue-600">Back to leads</Link></p>
       </div>
     );
   }
+
+  const closed = lead.stage === 'Closed Won' || lead.stage === 'Closed Lost';
+  const TABS = ['Overview', 'Intel', 'Pitch', 'Lessons', 'Content'];
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-6">
@@ -30,18 +34,21 @@ export default function LeadDetail() {
       <div className="flex items-start justify-between mb-1 gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">{lead.company}</h1>
-          <div className="flex items-center gap-2 mt-2">
+          <div className="flex items-center gap-2 mt-2 flex-wrap">
             <StageBadge stage={lead.stage} />
             <PriorityBadge priority={lead.priority} />
+            {closed && <LessonStatusBadge status={lead.lessonsLearnt.status} />}
             <span className="text-sm text-slate-500">· {lead.contact} · Owner: {userById(lead.owner)?.name}</span>
           </div>
         </div>
-        <button
-          onClick={() => { if (confirm('Delete this lead?')) { deleteLead(lead.id); navigate('/leads'); } }}
-          className="text-sm text-red-600 hover:text-red-800"
-        >
-          Delete
-        </button>
+        {canDelete(currentUser) && (
+          <button
+            onClick={() => { if (confirm('Delete this lead?')) { deleteLead(lead.id); navigate('/leads'); } }}
+            className="text-sm text-red-600 hover:text-red-800"
+          >
+            Delete
+          </button>
+        )}
       </div>
 
       <div className="border-b border-slate-200 mt-6 mb-6">
@@ -52,13 +59,13 @@ export default function LeadDetail() {
               onClick={() => setTab(t)}
               className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${tab === t ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-800'}`}
             >
-              {t}
+              {t}{t === 'Lessons' && closed && lead.lessonsLearnt.status === 'final' ? ' ✓' : ''}
             </button>
           ))}
         </div>
       </div>
 
-      {tab === 'Overview' && <OverviewTab lead={lead} updateLead={updateLead} />}
+      {tab === 'Overview' && <OverviewTab lead={lead} updateLead={updateLead} currentUser={currentUser} />}
       {tab === 'Intel' && <IntelPanel lead={lead} />}
       {tab === 'Pitch' && (
         <PitchTab
@@ -70,12 +77,15 @@ export default function LeadDetail() {
           currentUser={currentUser}
         />
       )}
+      {tab === 'Lessons' && <LessonsPanel lead={lead} />}
       {tab === 'Content' && <ContentTab content={data.contentRepo} />}
     </div>
   );
 }
 
-function OverviewTab({ lead, updateLead }) {
+function OverviewTab({ lead, updateLead, currentUser }) {
+  const editable = canEdit(lead, currentUser);
+  const showFinancials = canViewFinancials(currentUser);
   const [form, setForm] = useState({
     company: lead.company,
     contact: lead.contact || '',
@@ -90,44 +100,49 @@ function OverviewTab({ lead, updateLead }) {
   const set = (k, v) => { setForm(f => ({ ...f, [k]: v })); setSaved(false); };
 
   const save = () => {
-    updateLead(lead.id, {
+    const patch = {
       ...form,
-      value: form.value ? Number(form.value) : undefined,
       tags: form.tags.split(',').map(t => t.trim()).filter(Boolean),
-    });
+    };
+    if (showFinancials) patch.value = form.value ? Number(form.value) : undefined;
+    else delete patch.value;
+    updateLead(lead.id, patch);
     setSaved(true);
   };
 
-  const cls = 'w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:border-blue-500 focus:outline-none';
+  const cls = `w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:border-blue-500 focus:outline-none ${!editable ? 'bg-slate-50' : ''}`;
 
   return (
     <div className="bg-white border border-slate-200 rounded-lg p-6 max-w-2xl">
       <div className="grid grid-cols-2 gap-4">
-        <L label="Company"><input value={form.company} onChange={e => set('company', e.target.value)} className={cls} /></L>
-        <L label="Contact"><input value={form.contact} onChange={e => set('contact', e.target.value)} className={cls} /></L>
-        <L label="Email"><input value={form.contactEmail} onChange={e => set('contactEmail', e.target.value)} className={cls} /></L>
-        <L label="Value ($)"><input type="number" value={form.value} onChange={e => set('value', e.target.value)} className={cls} /></L>
+        <L label="Company"><input readOnly={!editable} value={form.company} onChange={e => set('company', e.target.value)} className={cls} /></L>
+        <L label="Contact"><input readOnly={!editable} value={form.contact} onChange={e => set('contact', e.target.value)} className={cls} /></L>
+        <L label="Email"><input readOnly={!editable} value={form.contactEmail} onChange={e => set('contactEmail', e.target.value)} className={cls} /></L>
+        {showFinancials && <L label="Value ($)"><input readOnly={!editable} type="number" value={form.value} onChange={e => set('value', e.target.value)} className={cls} /></L>}
         <L label="Stage">
-          <select value={form.stage} onChange={e => set('stage', e.target.value)} className={cls}>
+          <select disabled={!editable} value={form.stage} onChange={e => set('stage', e.target.value)} className={cls}>
             {STAGES.map(s => <option key={s}>{s}</option>)}
           </select>
         </L>
         <L label="Priority">
-          <select value={form.priority} onChange={e => set('priority', e.target.value)} className={cls}>
+          <select disabled={!editable} value={form.priority} onChange={e => set('priority', e.target.value)} className={cls}>
             {PRIORITIES.map(p => <option key={p}>{p}</option>)}
           </select>
         </L>
         <L label="Owner">
-          <select value={form.owner} onChange={e => set('owner', e.target.value)} className={cls}>
+          <select disabled={!editable} value={form.owner} onChange={e => set('owner', e.target.value)} className={cls}>
             {USERS.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
           </select>
         </L>
-        <L label="Tags"><input value={form.tags} onChange={e => set('tags', e.target.value)} className={cls} placeholder="comma, separated" /></L>
+        <L label="Tags"><input readOnly={!editable} value={form.tags} onChange={e => set('tags', e.target.value)} className={cls} placeholder="comma, separated" /></L>
       </div>
-      <div className="flex items-center gap-3 mt-6">
-        <button onClick={save} className="px-4 py-2 bg-blue-600 text-white rounded-md font-medium hover:bg-blue-700">Save</button>
-        {saved && <span className="text-sm text-green-600">Saved ✓</span>}
-      </div>
+      {editable && (
+        <div className="flex items-center gap-3 mt-6">
+          <button onClick={save} className="px-4 py-2 bg-blue-600 text-white rounded-md font-medium hover:bg-blue-700">Save</button>
+          {saved && <span className="text-sm text-green-600">Saved ✓</span>}
+        </div>
+      )}
+      <VisibilityPanel lead={lead} />
     </div>
   );
 }
@@ -174,11 +189,7 @@ function PitchTab({ lead, pitches, addPitch, updatePitch, deletePitch, currentUs
           {pitches.map(p => <option key={p.id} value={p.id}>{p.title}</option>)}
         </select>
         <button onClick={() => createNew(false)} className="px-3 py-2 bg-slate-100 hover:bg-slate-200 rounded-md text-sm border border-slate-300">+ Blank Pitch</button>
-        <button
-          onClick={() => createNew(true)}
-          disabled={generating}
-          className="px-3 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 disabled:bg-slate-300"
-        >
+        <button onClick={() => createNew(true)} disabled={generating} className="px-3 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 disabled:bg-slate-300">
           {generating ? 'Drafting...' : '✨ AI Draft Pitch'}
         </button>
         {selected && (
@@ -187,10 +198,7 @@ function PitchTab({ lead, pitches, addPitch, updatePitch, deletePitch, currentUs
       </div>
       {error && <p className="text-red-600 text-sm mb-3">{error}</p>}
       {selected ? (
-        <PitchEditor
-          pitch={selected}
-          onSave={(patch) => updatePitch(selected.id, patch)}
-        />
+        <PitchEditor pitch={selected} onSave={(patch) => updatePitch(selected.id, patch)} />
       ) : (
         <p className="text-slate-400 text-sm">No pitch selected. Create one above.</p>
       )}
@@ -210,12 +218,7 @@ function ContentTab({ content }) {
   };
   return (
     <div>
-      <input
-        value={q}
-        onChange={e => setQ(e.target.value)}
-        placeholder="Search content library..."
-        className="w-full max-w-md px-3 py-2 border border-slate-300 rounded-md text-sm mb-4"
-      />
+      <input value={q} onChange={e => setQ(e.target.value)} placeholder="Search content library..." className="w-full max-w-md px-3 py-2 border border-slate-300 rounded-md text-sm mb-4" />
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {filtered.map(c => (
           <div key={c.id} className="bg-white border border-slate-200 rounded-lg p-4">

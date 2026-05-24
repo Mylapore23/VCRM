@@ -1,11 +1,13 @@
 import { useMemo, useState } from 'react';
 import { useApp } from '../context/AppContext';
 import ContentCard from '../components/ContentCard';
+import { canDeleteContent } from '../utils/permissions';
 
 const TYPES = ['case_study', 'one_pager', 'deck_slide', 'template', 'snippet'];
 
 export default function ContentRepo() {
-  const { data, addContent, updateContent, deleteContent } = useApp();
+  const { data, currentUser, addContent, updateContent, deleteContent } = useApp();
+  const allowDelete = canDeleteContent(currentUser);
   const [typeFilter, setTypeFilter] = useState('');
   const [tagFilter, setTagFilter] = useState('');
   const [editing, setEditing] = useState(null);
@@ -46,7 +48,7 @@ export default function ContentRepo() {
             key={item.id}
             item={item}
             onEdit={() => setEditing(item)}
-            onDelete={() => { if (confirm(`Delete "${item.title}"?`)) deleteContent(item.id); }}
+            onDelete={allowDelete ? () => { if (confirm(`Delete "${item.title}"?`)) deleteContent(item.id); } : null}
           />
         ))}
       </div>
