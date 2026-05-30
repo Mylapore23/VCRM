@@ -8,7 +8,6 @@ import PitchDocs from './pages/PitchDocs';
 import ContentRepo from './pages/ContentRepo';
 import KnowledgeRepo from './pages/KnowledgeRepo';
 import Nav from './components/Nav';
-import ApiKeyBanner from './components/ApiKeyBanner';
 
 function Shell() {
   const { currentUser } = useApp();
@@ -16,7 +15,6 @@ function Shell() {
   return (
     <>
       <Nav />
-      <ApiKeyBanner />
       <Routes>
         <Route path="/" element={<Dashboard />} />
         <Route path="/leads" element={<Leads />} />

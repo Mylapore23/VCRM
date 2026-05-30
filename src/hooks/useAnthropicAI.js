@@ -1,28 +1,16 @@
 import { useCallback } from 'react';
 import { userById } from '../config/users';
+import { ANTHROPIC_API_KEY, ANTHROPIC_MODEL } from '../config/ai';
 
-const API_KEY_STORAGE = 'voltara_api_key';
-const MODEL = 'claude-sonnet-4-20250514';
 const API_URL = 'https://api.anthropic.com/v1/messages';
 
-export function getApiKey() {
-  return localStorage.getItem(API_KEY_STORAGE) || '';
-}
-
-export function setApiKey(key) {
-  localStorage.setItem(API_KEY_STORAGE, key);
-}
-
-export function clearApiKey() {
-  localStorage.removeItem(API_KEY_STORAGE);
-}
-
 async function callClaude({ system, messages, tools }) {
-  const apiKey = getApiKey();
-  if (!apiKey) throw new Error('Missing Anthropic API key. Set it via the banner at the top.');
+  if (!ANTHROPIC_API_KEY) {
+    throw new Error('Anthropic API key not configured. Set VITE_ANTHROPIC_API_KEY in your .env file.');
+  }
 
   const body = {
-    model: MODEL,
+    model: ANTHROPIC_MODEL,
     max_tokens: 1500,
     system,
     messages,
@@ -33,7 +21,7 @@ async function callClaude({ system, messages, tools }) {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'x-api-key': apiKey,
+      'x-api-key': ANTHROPIC_API_KEY,
       'anthropic-version': '2023-06-01',
       'anthropic-dangerous-direct-browser-access': 'true',
     },
