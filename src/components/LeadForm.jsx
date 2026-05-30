@@ -6,8 +6,10 @@ import { canAssignVisibility, canViewFinancials } from '../utils/permissions';
 export default function LeadForm({ initial, onSave, onCancel, currentUser }) {
   const [form, setForm] = useState(() => ({
     company: '',
+    website: '',
     contact: '',
     contactEmail: '',
+    contactLinkedin: '',
     partner: '',
     stage: 'Prospect',
     priority: 'Medium',
@@ -48,8 +50,17 @@ export default function LeadForm({ initial, onSave, onCancel, currentUser }) {
         <h3 className="text-lg font-semibold mb-4">{initial?.id ? 'Edit Lead' : 'Add Lead'}</h3>
         <div className="space-y-3">
           <Field label="Company *"><input required value={form.company} onChange={e => set('company', e.target.value)} className={inputCls} /></Field>
-          <Field label="Contact"><input value={form.contact} onChange={e => set('contact', e.target.value)} className={inputCls} /></Field>
-          <Field label="Contact Email"><input type="email" value={form.contactEmail} onChange={e => set('contactEmail', e.target.value)} className={inputCls} /></Field>
+          <Field label="Website"><input value={form.website} onChange={e => set('website', e.target.value)} className={inputCls} placeholder="https://example.com" /></Field>
+          <div className="border-t border-slate-200 pt-3">
+            <p className="text-xs font-semibold text-slate-700 mb-2">Primary Contact</p>
+            <div className="space-y-3">
+              <Field label="Name"><input value={form.contact} onChange={e => set('contact', e.target.value)} className={inputCls} /></Field>
+              <div className="grid grid-cols-2 gap-3">
+                <Field label="Email"><input type="email" value={form.contactEmail} onChange={e => set('contactEmail', e.target.value)} className={inputCls} /></Field>
+                <Field label="LinkedIn"><input value={form.contactLinkedin} onChange={e => set('contactLinkedin', e.target.value)} className={inputCls} placeholder="linkedin.com/in/handle" /></Field>
+              </div>
+            </div>
+          </div>
           <Field label="Partner (if any)"><input value={form.partner} onChange={e => set('partner', e.target.value)} className={inputCls} placeholder="Partner / referral source" /></Field>
           <div className="grid grid-cols-2 gap-3">
             <Field label="Stage">

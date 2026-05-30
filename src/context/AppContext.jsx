@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useState, useCallback, useMemo } 
 import { v4 as uuid } from 'uuid';
 import { canView } from '../utils/permissions';
 
-const STORAGE_KEY = 'voltara_data';
+const STORAGE_KEY = 'voltara_data_v3';
 const SESSION_KEY = 'voltara_session';
 
 function emptyLessons() {
@@ -33,96 +33,11 @@ function makeLead(seed) {
 }
 
 function seedInitial() {
-  const now = new Date().toISOString();
-  const nexusId = uuid();
-  const brightlineId = uuid();
-  const stackformId = uuid();
-
-  const brightlineLessons = {
-    status: 'final',
-    outcome: 'Closed 6-month pilot contract after 3 rounds of negotiation.',
-    pros: [
-      { id: uuid(), text: 'Strong exec sponsor from the start' },
-      { id: uuid(), text: 'Demo tailored to compliance workflow resonated' },
-    ],
-    cons: [
-      { id: uuid(), text: 'Pricing deck sent too early before value was established' },
-      { id: uuid(), text: 'Legal review took 3 weeks — not budgeted in timeline' },
-    ],
-    recommendations: 'Lead with compliance angle in healthcare. Build legal review time into all enterprise timelines.',
-    aiSynthesis: 'Brightline Health closed after a value-first approach anchored on compliance workflow fit. Early exec alignment was the decisive factor. Future healthcare deals should delay pricing conversations until after a tailored demo and should budget 3+ weeks for legal review.',
-    completedAt: '2025-05-01T00:00:00Z',
-    completedBy: 'u1',
-  };
-
   return {
-    leads: [
-      {
-        id: nexusId,
-        company: 'Nexus Dynamics', contact: 'Jordan Lee',
-        contactEmail: 'jordan@nexusdynamics.io',
-        stage: 'Qualified', priority: 'High', value: 45000,
-        owner: 'u2', visibility: ['sales'],
-        tags: ['SaaS', 'Series A'],
-        notes: [], webIntel: [], lessonsLearnt: emptyLessons(),
-        createdAt: now, updatedAt: now,
-      },
-      {
-        id: brightlineId,
-        company: 'Brightline Health', contact: 'Amara Singh',
-        contactEmail: 'amara@brightline.health',
-        stage: 'Closed Won', priority: 'High', value: 120000,
-        owner: 'u1', visibility: ['sales', 'marketing'],
-        tags: ['Healthcare', 'Enterprise'],
-        notes: [], webIntel: [], lessonsLearnt: brightlineLessons,
-        createdAt: now, updatedAt: now,
-      },
-      {
-        id: stackformId,
-        company: 'Stackform Inc', contact: 'Tyler Okafor',
-        contactEmail: 'tyler@stackform.dev',
-        stage: 'Prospect', priority: 'Medium', value: 18000,
-        owner: 'u3', visibility: ['marketing'],
-        tags: ['DevTools'],
-        notes: [], webIntel: [], lessonsLearnt: emptyLessons(),
-        createdAt: now, updatedAt: now,
-      },
-    ],
+    leads: [],
     pitchDocs: [],
-    contentRepo: [
-      {
-        id: uuid(),
-        title: 'Voltara One-Pager',
-        type: 'one_pager',
-        content: '# Voltara LLC\n\nGTM intelligence for modern teams.\n\n- Identify high-fit accounts\n- AI-assisted research\n- Pitch faster, win more',
-        tags: ['intro', 'overview'],
-        createdAt: now,
-      },
-    ],
-    knowledgeRepo: [
-      {
-        id: uuid(),
-        title: 'Healthcare Enterprise Win — Brightline Health',
-        pitchTheme: 'Healthcare',
-        type: 'win_story',
-        content: `## Outcome\nClosed 6-month pilot contract after 3 rounds of negotiation.\n\n## What Worked\n- Strong exec sponsor from the start\n- Demo tailored to compliance workflow resonated\n\n## What Didn't\n- Pricing deck sent too early\n- Legal review took 3 weeks\n\n## Synthesis\nBrightline closed via a value-first, compliance-anchored approach. Exec alignment was decisive.`,
-        linkedLeads: [brightlineId],
-        tags: ['Healthcare', 'Enterprise'],
-        author: 'u1',
-        createdAt: now, updatedAt: now,
-      },
-      {
-        id: uuid(),
-        title: 'Compliance-first messaging for regulated industries',
-        pitchTheme: 'Healthcare',
-        type: 'messaging',
-        content: '## Frame\nLead with how Voltara reduces audit prep time and surfaces compliance gaps before they become risks. Avoid efficiency framing — it reads as cost-cutting in regulated buyer rooms.\n\n## Proof Points\n- HIPAA-aware data handling\n- Audit trail per record',
-        linkedLeads: [],
-        tags: ['Healthcare', 'messaging'],
-        author: 'u1',
-        createdAt: now, updatedAt: now,
-      },
-    ],
+    contentRepo: [],
+    knowledgeRepo: [],
   };
 }
 

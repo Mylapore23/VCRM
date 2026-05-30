@@ -34,7 +34,14 @@ export default function LeadDetail() {
       <button onClick={() => navigate('/leads')} className="text-sm text-slate-500 hover:text-slate-700 mb-3">← All leads</button>
       <div className="flex items-start justify-between mb-1 gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">{lead.company}</h1>
+          <div className="flex items-center gap-3 flex-wrap">
+            <h1 className="text-2xl font-bold text-slate-900">{lead.company}</h1>
+            {lead.website && (
+              <a href={/^https?:\/\//i.test(lead.website) ? lead.website : `https://${lead.website}`} target="_blank" rel="noreferrer" className="text-sm text-blue-600 hover:underline">
+                ↗ Website
+              </a>
+            )}
+          </div>
           <div className="flex items-center gap-2 mt-2 flex-wrap">
             <StageBadge stage={lead.stage} />
             <PriorityBadge priority={lead.priority} />
@@ -90,8 +97,10 @@ function OverviewTab({ lead, updateLead, currentUser }) {
   const showFinancials = canViewFinancials(currentUser);
   const [form, setForm] = useState({
     company: lead.company,
+    website: lead.website || '',
     contact: lead.contact || '',
     contactEmail: lead.contactEmail || '',
+    contactLinkedin: lead.contactLinkedin || '',
     partner: lead.partner || '',
     stage: lead.stage,
     priority: lead.priority,
@@ -119,8 +128,10 @@ function OverviewTab({ lead, updateLead, currentUser }) {
     <div className="bg-white border border-slate-200 rounded-lg p-6 max-w-2xl">
       <div className="grid grid-cols-2 gap-4">
         <L label="Company"><input readOnly={!editable} value={form.company} onChange={e => set('company', e.target.value)} className={cls} /></L>
-        <L label="Contact"><input readOnly={!editable} value={form.contact} onChange={e => set('contact', e.target.value)} className={cls} /></L>
-        <L label="Email"><input readOnly={!editable} value={form.contactEmail} onChange={e => set('contactEmail', e.target.value)} className={cls} /></L>
+        <L label="Website"><input readOnly={!editable} value={form.website} onChange={e => set('website', e.target.value)} className={cls} placeholder="https://example.com" /></L>
+        <L label="Primary Contact"><input readOnly={!editable} value={form.contact} onChange={e => set('contact', e.target.value)} className={cls} /></L>
+        <L label="Primary Email"><input readOnly={!editable} value={form.contactEmail} onChange={e => set('contactEmail', e.target.value)} className={cls} /></L>
+        <L label="Primary LinkedIn"><input readOnly={!editable} value={form.contactLinkedin} onChange={e => set('contactLinkedin', e.target.value)} className={cls} placeholder="linkedin.com/in/handle" /></L>
         <L label="Partner"><input readOnly={!editable} value={form.partner} onChange={e => set('partner', e.target.value)} className={cls} placeholder="Partner / referral source" /></L>
         {showFinancials && <L label="Value ($)"><input readOnly={!editable} type="number" value={form.value} onChange={e => set('value', e.target.value)} className={cls} /></L>}
         <L label="Stage">
