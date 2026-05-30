@@ -24,6 +24,7 @@ function makeLead(seed) {
     webIntel: [],
     visibility: [],
     contacts: [],
+    subLeads: [],
     lessonsLearnt: emptyLessons(),
     createdAt: now,
     updatedAt: now,
@@ -52,6 +53,7 @@ function loadInitial() {
         ...l,
         visibility: l.visibility || [],
         contacts: l.contacts || [],
+        subLeads: l.subLeads || [],
         lessonsLearnt: { ...emptyLessons(), ...(l.lessonsLearnt || {}) },
       }));
       return data;
@@ -169,6 +171,40 @@ export function AppProvider({ children }) {
     }));
   }, []);
 
+  const addSubLead = useCallback((leadId, sub) => {
+    const now = new Date().toISOString();
+    setData(d => ({
+      ...d,
+      leads: d.leads.map(l => l.id === leadId ? {
+        ...l,
+        subLeads: [{ id: uuid(), createdAt: now, updatedAt: now, ...sub }, ...(l.subLeads || [])],
+        updatedAt: now,
+      } : l),
+    }));
+  }, []);
+
+  const updateSubLead = useCallback((leadId, subId, patch) => {
+    setData(d => ({
+      ...d,
+      leads: d.leads.map(l => l.id === leadId ? {
+        ...l,
+        subLeads: (l.subLeads || []).map(s => s.id === subId ? { ...s, ...patch, updatedAt: new Date().toISOString() } : s),
+        updatedAt: new Date().toISOString(),
+      } : l),
+    }));
+  }, []);
+
+  const deleteSubLead = useCallback((leadId, subId) => {
+    setData(d => ({
+      ...d,
+      leads: d.leads.map(l => l.id === leadId ? {
+        ...l,
+        subLeads: (l.subLeads || []).filter(s => s.id !== subId),
+        updatedAt: new Date().toISOString(),
+      } : l),
+    }));
+  }, []);
+
   const updateLessons = useCallback((leadId, lessons) => {
     setData(d => ({
       ...d,
@@ -276,6 +312,7 @@ export function AppProvider({ children }) {
       data, visibleLeads, currentUser, login, logout,
       addLead, updateLead, deleteLead, addNoteToLead, addWebIntel,
       addContact, updateContact, removeContact,
+      addSubLead, updateSubLead, deleteSubLead,
       updateLessons, finaliseLessons,
       addKnowledge, updateKnowledge, deleteKnowledge,
       addPitch, updatePitch, deletePitch,

@@ -8,6 +8,7 @@ import PitchEditor from '../components/PitchEditor';
 import VisibilityPanel from '../components/VisibilityPanel';
 import LessonsPanel from '../components/LessonsPanel';
 import ContactsPanel from '../components/ContactsPanel';
+import SubLeadsPanel from '../components/SubLeadsPanel';
 import { useAnthropicAI } from '../hooks/useAnthropicAI';
 import { canEdit, canDelete, canView, canViewFinancials } from '../utils/permissions';
 
@@ -27,7 +28,7 @@ export default function LeadDetail() {
   }
 
   const closed = lead.stage === 'Closed Won' || lead.stage === 'Closed Lost';
-  const TABS = ['Overview', 'Intel', 'Pitch', 'Lessons', 'Content'];
+  const TABS = ['Overview', 'Sub-Leads', 'Intel', 'Pitch', 'Lessons', 'Content'];
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-6">
@@ -47,6 +48,7 @@ export default function LeadDetail() {
             <PriorityBadge priority={lead.priority} />
             {closed && <LessonStatusBadge status={lead.lessonsLearnt.status} />}
             {lead.partner && <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-200">🤝 Partner: {lead.partner}</span>}
+            {(lead.subLeads?.length || 0) > 0 && <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">{lead.subLeads.length} sub-lead{lead.subLeads.length === 1 ? '' : 's'}</span>}
             <span className="text-sm text-slate-500">· {lead.contact} · Owner: {userById(lead.owner)?.name}</span>
           </div>
         </div>
@@ -75,6 +77,7 @@ export default function LeadDetail() {
       </div>
 
       {tab === 'Overview' && <OverviewTab lead={lead} updateLead={updateLead} currentUser={currentUser} />}
+      {tab === 'Sub-Leads' && <SubLeadsPanel lead={lead} />}
       {tab === 'Intel' && <IntelPanel lead={lead} />}
       {tab === 'Pitch' && (
         <PitchTab
