@@ -3,8 +3,9 @@ import { DndContext, useDraggable, useDroppable, PointerSensor, useSensor, useSe
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { userById, initials } from '../config/users';
-import { STAGES, PriorityBadge, LockIcon } from '../components/Badges';
+import { STAGES, PriorityBadge, LockIcon, ReminderFlag } from '../components/Badges';
 import { canEdit, canViewFinancials, formatValue } from '../utils/permissions';
+import { reminderFlag, flagLabel } from '../utils/reminders';
 
 function MetricCard({ label, value, accent }) {
   return (
@@ -21,12 +22,13 @@ function LeadCard({ lead, draggable, currentUser }) {
   const owner = userById(lead.owner);
   const style = transform ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` } : undefined;
   const restricted = !lead.visibility || lead.visibility.length < 2;
+  const flag = reminderFlag(lead);
 
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className={`bg-white border border-slate-200 rounded-md p-3 mb-2 shadow-sm ${draggable ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'} ${isDragging ? 'opacity-50' : ''}`}
+      className={`bg-white border rounded-md p-3 mb-2 shadow-sm ${flag === 'red' ? 'border-red-300' : flag === 'yellow' ? 'border-amber-300' : 'border-slate-200'} ${draggable ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'} ${isDragging ? 'opacity-50' : ''}`}
     >
       <div className="flex items-start justify-between gap-2 mb-2" {...(draggable ? listeners : {})} {...(draggable ? attributes : {})}>
         <div
@@ -34,6 +36,7 @@ function LeadCard({ lead, draggable, currentUser }) {
           onClick={(e) => { e.stopPropagation(); navigate(`/leads/${lead.id}`); }}
           onPointerDown={(e) => e.stopPropagation()}
         >
+          <ReminderFlag flag={flag} title={flagLabel(flag)} />
           {restricted && <LockIcon className="text-slate-400" />}
           {lead.company}
         </div>

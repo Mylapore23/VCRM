@@ -2,13 +2,15 @@ import { useState, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { USERS, userById } from '../config/users';
-import { STAGES, PRIORITIES, StageBadge, PriorityBadge, LessonStatusBadge } from '../components/Badges';
+import { STAGES, PRIORITIES, StageBadge, PriorityBadge, LessonStatusBadge, ReminderFlag } from '../components/Badges';
 import IntelPanel from '../components/IntelPanel';
 import PitchEditor from '../components/PitchEditor';
 import VisibilityPanel from '../components/VisibilityPanel';
 import LessonsPanel from '../components/LessonsPanel';
 import ContactsPanel from '../components/ContactsPanel';
 import SubLeadsPanel from '../components/SubLeadsPanel';
+import RemindersPanel from '../components/RemindersPanel';
+import { reminderFlag, flagLabel } from '../utils/reminders';
 import { useAnthropicAI } from '../hooks/useAnthropicAI';
 import { canEdit, canDelete, canView, canViewFinancials } from '../utils/permissions';
 
@@ -28,7 +30,8 @@ export default function LeadDetail() {
   }
 
   const closed = lead.stage === 'Closed Won' || lead.stage === 'Closed Lost';
-  const TABS = ['Overview', 'Sub-Leads', 'Intel', 'Pitch', 'Lessons', 'Content'];
+  const TABS = ['Overview', 'Sub-Leads', 'Reminders', 'Intel', 'Pitch', 'Lessons', 'Content'];
+  const flag = reminderFlag(lead);
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-6">
@@ -36,6 +39,7 @@ export default function LeadDetail() {
       <div className="flex items-start justify-between mb-1 gap-4">
         <div>
           <div className="flex items-center gap-3 flex-wrap">
+            <ReminderFlag flag={flag} title={flagLabel(flag)} className="text-2xl" />
             <h1 className="text-2xl font-bold text-slate-900">{lead.company}</h1>
             {lead.website && (
               <a href={/^https?:\/\//i.test(lead.website) ? lead.website : `https://${lead.website}`} target="_blank" rel="noreferrer" className="text-sm text-blue-600 hover:underline">
@@ -78,6 +82,7 @@ export default function LeadDetail() {
 
       {tab === 'Overview' && <OverviewTab lead={lead} updateLead={updateLead} currentUser={currentUser} />}
       {tab === 'Sub-Leads' && <SubLeadsPanel lead={lead} />}
+      {tab === 'Reminders' && <RemindersPanel lead={lead} />}
       {tab === 'Intel' && <IntelPanel lead={lead} />}
       {tab === 'Pitch' && (
         <PitchTab

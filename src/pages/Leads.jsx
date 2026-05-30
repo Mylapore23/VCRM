@@ -2,7 +2,8 @@ import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { USERS, userById } from '../config/users';
-import { STAGES, PRIORITIES, PriorityBadge, StageBadge, LockIcon } from '../components/Badges';
+import { STAGES, PRIORITIES, PriorityBadge, StageBadge, LockIcon, ReminderFlag } from '../components/Badges';
+import { reminderFlag, flagLabel } from '../utils/reminders';
 import LeadForm from '../components/LeadForm';
 import { canCreateLead, canViewFinancials, canAssignVisibility, formatValue } from '../utils/permissions';
 
@@ -78,10 +79,12 @@ export default function Leads() {
             )}
             {filtered.map(l => {
               const restricted = !l.visibility || l.visibility.length < 2;
+              const flag = reminderFlag(l);
               return (
                 <tr key={l.id} onClick={() => navigate(`/leads/${l.id}`)} className="border-b border-slate-100 hover:bg-blue-50 cursor-pointer">
                   <td className="px-4 py-3 font-medium text-slate-900">
                     <span className="inline-flex items-center gap-1.5">
+                      <ReminderFlag flag={flag} title={flagLabel(flag)} />
                       {restricted && <LockIcon className="text-slate-400" />}
                       {l.company}
                     </span>

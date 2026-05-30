@@ -67,6 +67,18 @@ export function LessonStatusBadge({ status }) {
   return <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-700 border border-amber-200">Draft</span>;
 }
 
+export function ReminderFlag({ flag, title, className = '' }) {
+  if (!flag) return null;
+  const color = flag === 'red' ? 'text-red-600' : 'text-amber-500';
+  return (
+    <span title={title} className={`inline-flex ${color} ${className}`} aria-label={title}>
+      <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
+        <path d="M5 3a1 1 0 0 1 1-1h11.5a.75.75 0 0 1 .6 1.2L15.5 7l2.6 3.8a.75.75 0 0 1-.6 1.2H7v9a1 1 0 1 1-2 0V3z" />
+      </svg>
+    </span>
+  );
+}
+
 export function LockIcon({ className = '' }) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={`w-3.5 h-3.5 ${className}`}>

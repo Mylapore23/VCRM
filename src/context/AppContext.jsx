@@ -25,6 +25,7 @@ function makeLead(seed) {
     visibility: [],
     contacts: [],
     subLeads: [],
+    reminders: [],
     lessonsLearnt: emptyLessons(),
     createdAt: now,
     updatedAt: now,
@@ -54,6 +55,7 @@ function loadInitial() {
         visibility: l.visibility || [],
         contacts: l.contacts || [],
         subLeads: l.subLeads || [],
+        reminders: l.reminders || [],
         lessonsLearnt: { ...emptyLessons(), ...(l.lessonsLearnt || {}) },
       }));
       return data;
@@ -166,6 +168,40 @@ export function AppProvider({ children }) {
       leads: d.leads.map(l => l.id === leadId ? {
         ...l,
         contacts: (l.contacts || []).filter(c => c.id !== contactId),
+        updatedAt: new Date().toISOString(),
+      } : l),
+    }));
+  }, []);
+
+  const addReminder = useCallback((leadId, reminder) => {
+    const now = new Date().toISOString();
+    setData(d => ({
+      ...d,
+      leads: d.leads.map(l => l.id === leadId ? {
+        ...l,
+        reminders: [{ id: uuid(), done: false, createdAt: now, ...reminder }, ...(l.reminders || [])],
+        updatedAt: now,
+      } : l),
+    }));
+  }, []);
+
+  const updateReminder = useCallback((leadId, reminderId, patch) => {
+    setData(d => ({
+      ...d,
+      leads: d.leads.map(l => l.id === leadId ? {
+        ...l,
+        reminders: (l.reminders || []).map(r => r.id === reminderId ? { ...r, ...patch } : r),
+        updatedAt: new Date().toISOString(),
+      } : l),
+    }));
+  }, []);
+
+  const deleteReminder = useCallback((leadId, reminderId) => {
+    setData(d => ({
+      ...d,
+      leads: d.leads.map(l => l.id === leadId ? {
+        ...l,
+        reminders: (l.reminders || []).filter(r => r.id !== reminderId),
         updatedAt: new Date().toISOString(),
       } : l),
     }));
@@ -313,6 +349,7 @@ export function AppProvider({ children }) {
       addLead, updateLead, deleteLead, addNoteToLead, addWebIntel,
       addContact, updateContact, removeContact,
       addSubLead, updateSubLead, deleteSubLead,
+      addReminder, updateReminder, deleteReminder,
       updateLessons, finaliseLessons,
       addKnowledge, updateKnowledge, deleteKnowledge,
       addPitch, updatePitch, deletePitch,
