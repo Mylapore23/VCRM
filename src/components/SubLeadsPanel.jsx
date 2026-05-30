@@ -104,6 +104,20 @@ export default function SubLeadsPanel({ lead }) {
                         })()}
                         <span className="text-xs text-slate-500">Owner: {userById(s.owner)?.name || '—'}</span>
                         {showFinancials && s.value ? <span className="text-xs font-medium text-slate-700">${Number(s.value).toLocaleString()}</span> : null}
+                        {s.expectedCloseDate && (() => {
+                          const due = new Date(s.expectedCloseDate);
+                          const open = s.stage !== 'Closed Won' && s.stage !== 'Closed Lost';
+                          const days = Math.ceil((due - new Date()) / 86400000);
+                          const overdue = open && days < 0;
+                          const soon = open && days >= 0 && days <= 7;
+                          const tone = overdue ? 'bg-red-50 text-red-700 border-red-200' : soon ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-slate-50 text-slate-600 border-slate-200';
+                          const suffix = overdue ? ` · overdue ${-days}d` : soon ? ` · in ${days}d` : '';
+                          return (
+                            <span className={`text-xs px-1.5 py-0.5 rounded border ${tone}`} title={`Expected close ${due.toLocaleDateString()}`}>
+                              📅 {due.toLocaleDateString()}{suffix}
+                            </span>
+                          );
+                        })()}
                       </div>
                       {linkedContacts.length > 0 && (
                         <div className="flex flex-wrap gap-1 mt-2">
@@ -141,6 +155,7 @@ function SubLeadForm({ initial, currentUser, showFinancials, contactOptions, onS
     value: initial?.value ?? '',
     owner: initial?.owner || currentUser?.id || USERS[0].id,
     contactIds: initial?.contactIds || [],
+    expectedCloseDate: initial?.expectedCloseDate ? initial.expectedCloseDate.slice(0, 10) : '',
   });
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
   const toggleContact = (id) => set('contactIds', form.contactIds.includes(id) ? form.contactIds.filter(x => x !== id) : [...form.contactIds, id]);
@@ -155,6 +170,7 @@ function SubLeadForm({ initial, currentUser, showFinancials, contactOptions, onS
       priority: form.priority,
       owner: form.owner,
       contactIds: form.contactIds,
+      expectedCloseDate: form.expectedCloseDate ? new Date(form.expectedCloseDate).toISOString() : '',
     };
     if (showFinancials) payload.value = form.value === '' ? undefined : Number(form.value);
     onSave(payload);
@@ -180,6 +196,10 @@ function SubLeadForm({ initial, currentUser, showFinancials, contactOptions, onS
           {USERS.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
         </select>
       </div>
+      <label className="block text-xs text-slate-600">
+        Expected close date
+        <input type="date" value={form.expectedCloseDate} onChange={e => set('expectedCloseDate', e.target.value)} className={cls + ' mt-1'} />
+      </label>
       {contactOptions.length > 0 && (
         <div>
           <div className="text-xs font-medium text-slate-600 mb-1">Linked Contacts (from account)</div>
