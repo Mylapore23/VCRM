@@ -1,7 +1,8 @@
 export const USERS = [
-  { id: 'u1', name: 'Sarah',  role: 'admin',     passcode: '7742' },
-  { id: 'u2', name: 'Marcus', role: 'sales',     passcode: '3391' },
-  { id: 'u3', name: 'Priya',  role: 'marketing', passcode: '8815' },
+  { id: 'u1', name: 'Sarah',       role: 'admin',     passcode: '7742' },
+  { id: 'u2', name: 'Marcus',      role: 'sales',     passcode: '3391' },
+  { id: 'u3', name: 'Priya',       role: 'marketing', passcode: '8815' },
+  { id: 'u4', name: 'Dan Beasley', role: 'admin',     passcode: '3232' },
 ];
 
 export function userById(id) {

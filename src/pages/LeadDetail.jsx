@@ -39,6 +39,7 @@ export default function LeadDetail() {
             <StageBadge stage={lead.stage} />
             <PriorityBadge priority={lead.priority} />
             {closed && <LessonStatusBadge status={lead.lessonsLearnt.status} />}
+            {lead.partner && <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-200">🤝 Partner: {lead.partner}</span>}
             <span className="text-sm text-slate-500">· {lead.contact} · Owner: {userById(lead.owner)?.name}</span>
           </div>
         </div>
@@ -91,6 +92,7 @@ function OverviewTab({ lead, updateLead, currentUser }) {
     company: lead.company,
     contact: lead.contact || '',
     contactEmail: lead.contactEmail || '',
+    partner: lead.partner || '',
     stage: lead.stage,
     priority: lead.priority,
     value: lead.value || '',
@@ -119,6 +121,7 @@ function OverviewTab({ lead, updateLead, currentUser }) {
         <L label="Company"><input readOnly={!editable} value={form.company} onChange={e => set('company', e.target.value)} className={cls} /></L>
         <L label="Contact"><input readOnly={!editable} value={form.contact} onChange={e => set('contact', e.target.value)} className={cls} /></L>
         <L label="Email"><input readOnly={!editable} value={form.contactEmail} onChange={e => set('contactEmail', e.target.value)} className={cls} /></L>
+        <L label="Partner"><input readOnly={!editable} value={form.partner} onChange={e => set('partner', e.target.value)} className={cls} placeholder="Partner / referral source" /></L>
         {showFinancials && <L label="Value ($)"><input readOnly={!editable} type="number" value={form.value} onChange={e => set('value', e.target.value)} className={cls} /></L>}
         <L label="Stage">
           <select disabled={!editable} value={form.stage} onChange={e => set('stage', e.target.value)} className={cls}>

@@ -8,6 +8,7 @@ export default function LeadForm({ initial, onSave, onCancel, currentUser }) {
     company: '',
     contact: '',
     contactEmail: '',
+    partner: '',
     stage: 'Prospect',
     priority: 'Medium',
     value: '',
@@ -49,6 +50,7 @@ export default function LeadForm({ initial, onSave, onCancel, currentUser }) {
           <Field label="Company *"><input required value={form.company} onChange={e => set('company', e.target.value)} className={inputCls} /></Field>
           <Field label="Contact"><input value={form.contact} onChange={e => set('contact', e.target.value)} className={inputCls} /></Field>
           <Field label="Contact Email"><input type="email" value={form.contactEmail} onChange={e => set('contactEmail', e.target.value)} className={inputCls} /></Field>
+          <Field label="Partner (if any)"><input value={form.partner} onChange={e => set('partner', e.target.value)} className={inputCls} placeholder="Partner / referral source" /></Field>
           <div className="grid grid-cols-2 gap-3">
             <Field label="Stage">
               <select value={form.stage} onChange={e => set('stage', e.target.value)} className={inputCls}>
