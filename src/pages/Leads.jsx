@@ -4,6 +4,7 @@ import { useApp } from '../context/AppContext';
 import { USERS, userById } from '../config/users';
 import { STAGES, PRIORITIES, PriorityBadge, StageBadge, LockIcon, ReminderFlag } from '../components/Badges';
 import { reminderFlag, flagLabel } from '../utils/reminders';
+import { leadTotalValue } from '../utils/value';
 import LeadForm from '../components/LeadForm';
 import { canCreateLead, canViewFinancials, canAssignVisibility, formatValue } from '../utils/permissions';
 
@@ -93,7 +94,16 @@ export default function Leads() {
                   <td className="px-4 py-3"><StageBadge stage={l.stage} /></td>
                   <td className="px-4 py-3"><PriorityBadge priority={l.priority} /></td>
                   <td className="px-4 py-3 text-slate-600">{userById(l.owner)?.name}</td>
-                  <td className="px-4 py-3 text-slate-700">{showFinancials ? (l.value ? `$${l.value.toLocaleString()}` : '—') : '—'}</td>
+                  <td className="px-4 py-3 text-slate-700">
+                    {showFinancials ? (
+                      leadTotalValue(l) > 0 ? (
+                        <span title={(l.subLeads?.length || 0) > 0 ? `Lead $${(l.value || 0).toLocaleString()} + ${l.subLeads.length} sub-lead${l.subLeads.length === 1 ? '' : 's'}` : ''}>
+                          ${leadTotalValue(l).toLocaleString()}
+                          {(l.subLeads?.length || 0) > 0 && <span className="text-slate-400"> Σ</span>}
+                        </span>
+                      ) : '—'
+                    ) : '—'}
+                  </td>
                   {showVisibility && (
                     <td className="px-4 py-3">
                       <div className="flex gap-1">

@@ -6,6 +6,7 @@ import { userById, initials } from '../config/users';
 import { STAGES, PriorityBadge, LockIcon, ReminderFlag } from '../components/Badges';
 import { canEdit, canViewFinancials, formatValue } from '../utils/permissions';
 import { reminderFlag, flagLabel } from '../utils/reminders';
+import { leadTotalValue, leadPipelineValue } from '../utils/value';
 
 function MetricCard({ label, value, accent }) {
   return (
@@ -49,7 +50,12 @@ function LeadCard({ lead, draggable, currentUser }) {
           </div>
           <span>{owner?.name}</span>
         </div>
-        {canViewFinancials(currentUser) && lead.value ? <span className="font-medium text-slate-700">${lead.value.toLocaleString()}</span> : null}
+        {canViewFinancials(currentUser) && leadTotalValue(lead) > 0 ? (
+          <span className="font-medium text-slate-700" title={(lead.subLeads?.length || 0) > 0 ? `Lead $${(lead.value || 0).toLocaleString()} + ${lead.subLeads.length} sub-lead${lead.subLeads.length === 1 ? '' : 's'}` : ''}>
+            ${leadTotalValue(lead).toLocaleString()}
+            {(lead.subLeads?.length || 0) > 0 && <span className="text-slate-400 font-normal"> Σ</span>}
+          </span>
+        ) : null}
       </div>
       {lead.partner && (
         <div className="mt-2 text-xs inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-100" {...(draggable ? listeners : {})} {...(draggable ? attributes : {})}>
@@ -82,7 +88,7 @@ export default function Dashboard() {
   const metrics = useMemo(() => {
     const scope = role === 'sales' ? visibleLeads.filter(l => l.owner === currentUser.id) : visibleLeads;
     const total = scope.length;
-    const pipeline = scope.filter(l => l.stage !== 'Closed Lost' && l.stage !== 'Closed Won').reduce((s, l) => s + (l.value || 0), 0);
+    const pipeline = scope.reduce((s, l) => s + leadPipelineValue(l), 0);
     const high = scope.filter(l => l.priority === 'High').length;
     const won = scope.filter(l => l.stage === 'Closed Won').length;
     const proposals = scope.filter(l => l.stage === 'Proposal' || l.stage === 'Negotiation').length;
