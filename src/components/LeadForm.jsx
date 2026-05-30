@@ -45,7 +45,7 @@ export default function LeadForm({ initial, onSave, onCancel, currentUser }) {
       <form
         onSubmit={submit}
         onClick={e => e.stopPropagation()}
-        className="bg-white rounded-xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto"
+        className="bg-white text-slate-900 rounded-xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto"
       >
         <h3 className="text-lg font-semibold mb-4">{initial?.id ? 'Edit Lead' : 'Add Lead'}</h3>
         <div className="space-y-3">

@@ -14,6 +14,7 @@ export default function Nav() {
   const [showAdd, setShowAdd] = useState(false);
 
   return (
+    <>
     <header className="bg-slate-900 text-white border-b border-slate-800">
       <div className="max-w-7xl mx-auto px-6 py-3 flex items-center gap-6">
         <div className="flex items-center gap-2">
@@ -68,13 +69,14 @@ export default function Nav() {
           </div>
         )}
       </div>
-      {showAdd && (
-        <LeadForm
-          currentUser={currentUser}
-          onSave={(data) => { const l = addLead(data); setShowAdd(false); navigate(`/leads/${l.id}`); }}
-          onCancel={() => setShowAdd(false)}
-        />
-      )}
     </header>
+    {showAdd && (
+      <LeadForm
+        currentUser={currentUser}
+        onSave={(data) => { const l = addLead(data); setShowAdd(false); navigate(`/leads/${l.id}`); }}
+        onCancel={() => setShowAdd(false)}
+      />
+    )}
+    </>
   );
 }

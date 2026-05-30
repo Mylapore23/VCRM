@@ -48,6 +48,11 @@ function LeadCard({ lead, draggable, currentUser }) {
         </div>
         {canViewFinancials(currentUser) && lead.value ? <span className="font-medium text-slate-700">${lead.value.toLocaleString()}</span> : null}
       </div>
+      {lead.partner && (
+        <div className="mt-2 text-xs inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-100" {...(draggable ? listeners : {})} {...(draggable ? attributes : {})}>
+          🤝 {lead.partner}
+        </div>
+      )}
     </div>
   );
 }
