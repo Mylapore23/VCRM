@@ -7,6 +7,7 @@ import IntelPanel from '../components/IntelPanel';
 import PitchEditor from '../components/PitchEditor';
 import VisibilityPanel from '../components/VisibilityPanel';
 import LessonsPanel from '../components/LessonsPanel';
+import ContactsPanel from '../components/ContactsPanel';
 import { useAnthropicAI } from '../hooks/useAnthropicAI';
 import { canEdit, canDelete, canView, canViewFinancials } from '../utils/permissions';
 
@@ -142,6 +143,7 @@ function OverviewTab({ lead, updateLead, currentUser }) {
           {saved && <span className="text-sm text-green-600">Saved ✓</span>}
         </div>
       )}
+      <ContactsPanel lead={lead} />
       <VisibilityPanel lead={lead} />
     </div>
   );

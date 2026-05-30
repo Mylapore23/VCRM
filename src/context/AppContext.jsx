@@ -23,6 +23,7 @@ function makeLead(seed) {
     notes: [],
     webIntel: [],
     visibility: [],
+    contacts: [],
     lessonsLearnt: emptyLessons(),
     createdAt: now,
     updatedAt: now,
@@ -135,6 +136,7 @@ function loadInitial() {
       data.leads = (data.leads || []).map(l => ({
         ...l,
         visibility: l.visibility || [],
+        contacts: l.contacts || [],
         lessonsLearnt: { ...emptyLessons(), ...(l.lessonsLearnt || {}) },
       }));
       return data;
@@ -214,6 +216,39 @@ export function AppProvider({ children }) {
       leads: d.leads.map(l => l.id === leadId ? {
         ...l,
         webIntel: [{ id: uuid(), fetchedAt: new Date().toISOString(), ...entry }, ...l.webIntel],
+        updatedAt: new Date().toISOString(),
+      } : l),
+    }));
+  }, []);
+
+  const addContact = useCallback((leadId, contact) => {
+    setData(d => ({
+      ...d,
+      leads: d.leads.map(l => l.id === leadId ? {
+        ...l,
+        contacts: [...(l.contacts || []), { id: uuid(), ...contact }],
+        updatedAt: new Date().toISOString(),
+      } : l),
+    }));
+  }, []);
+
+  const updateContact = useCallback((leadId, contactId, patch) => {
+    setData(d => ({
+      ...d,
+      leads: d.leads.map(l => l.id === leadId ? {
+        ...l,
+        contacts: (l.contacts || []).map(c => c.id === contactId ? { ...c, ...patch } : c),
+        updatedAt: new Date().toISOString(),
+      } : l),
+    }));
+  }, []);
+
+  const removeContact = useCallback((leadId, contactId) => {
+    setData(d => ({
+      ...d,
+      leads: d.leads.map(l => l.id === leadId ? {
+        ...l,
+        contacts: (l.contacts || []).filter(c => c.id !== contactId),
         updatedAt: new Date().toISOString(),
       } : l),
     }));
@@ -325,6 +360,7 @@ export function AppProvider({ children }) {
     <AppContext.Provider value={{
       data, visibleLeads, currentUser, login, logout,
       addLead, updateLead, deleteLead, addNoteToLead, addWebIntel,
+      addContact, updateContact, removeContact,
       updateLessons, finaliseLessons,
       addKnowledge, updateKnowledge, deleteKnowledge,
       addPitch, updatePitch, deletePitch,
