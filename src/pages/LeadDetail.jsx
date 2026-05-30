@@ -9,6 +9,7 @@ import PitchEditor from '../components/PitchEditor';
 import VisibilityPanel from '../components/VisibilityPanel';
 import LessonsPanel from '../components/LessonsPanel';
 import ContactsPanel from '../components/ContactsPanel';
+import CompetitorsPanel from '../components/CompetitorsPanel';
 import SubLeadsPanel from '../components/SubLeadsPanel';
 import RemindersPanel from '../components/RemindersPanel';
 import { reminderFlag, flagLabel } from '../utils/reminders';
@@ -153,6 +154,7 @@ function OverviewTab({ lead, updateLead, currentUser }) {
         </div>
       )}
       <ContactsPanel lead={lead} />
+      <CompetitorsPanel lead={lead} />
       <VisibilityPanel lead={lead} />
     </div>
   );

@@ -26,6 +26,7 @@ function makeLead(seed) {
     contacts: [],
     subLeads: [],
     reminders: [],
+    competitors: [],
     lessonsLearnt: emptyLessons(),
     createdAt: now,
     updatedAt: now,
@@ -73,6 +74,7 @@ function loadInitial() {
           contacts: l.contacts || [],
           subLeads,
           reminders: l.reminders || [],
+          competitors: l.competitors || [],
           lessonsLearnt: { ...emptyLessons(), ...(l.lessonsLearnt || {}) },
         };
       });
@@ -225,6 +227,40 @@ export function AppProvider({ children }) {
     }));
   }, []);
 
+  const addCompetitor = useCallback((leadId, comp) => {
+    const now = new Date().toISOString();
+    setData(d => ({
+      ...d,
+      leads: d.leads.map(l => l.id === leadId ? {
+        ...l,
+        competitors: [{ id: uuid(), updatedAt: now, ...comp }, ...(l.competitors || [])],
+        updatedAt: now,
+      } : l),
+    }));
+  }, []);
+
+  const updateCompetitor = useCallback((leadId, compId, patch) => {
+    setData(d => ({
+      ...d,
+      leads: d.leads.map(l => l.id === leadId ? {
+        ...l,
+        competitors: (l.competitors || []).map(c => c.id === compId ? { ...c, ...patch, updatedAt: new Date().toISOString() } : c),
+        updatedAt: new Date().toISOString(),
+      } : l),
+    }));
+  }, []);
+
+  const removeCompetitor = useCallback((leadId, compId) => {
+    setData(d => ({
+      ...d,
+      leads: d.leads.map(l => l.id === leadId ? {
+        ...l,
+        competitors: (l.competitors || []).filter(c => c.id !== compId),
+        updatedAt: new Date().toISOString(),
+      } : l),
+    }));
+  }, []);
+
   const addSubLead = useCallback((leadId, sub) => {
     const now = new Date().toISOString();
     setData(d => ({
@@ -370,6 +406,7 @@ export function AppProvider({ children }) {
       data, visibleLeads, currentUser, login, logout,
       addLead, updateLead, deleteLead, addNoteToLead, addWebIntel,
       addContact, updateContact, removeContact,
+      addCompetitor, updateCompetitor, removeCompetitor,
       addSubLead, updateSubLead, deleteSubLead,
       addReminder, updateReminder, deleteReminder,
       updateLessons, finaliseLessons,
