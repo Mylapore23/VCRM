@@ -3,6 +3,7 @@ import { useApp } from '../context/AppContext';
 import { canEdit } from '../utils/permissions';
 
 const CONTACT_KINDS = ['Champion', 'Decision Maker', 'Economic Buyer', 'Technical Buyer', 'Influencer', 'Gatekeeper', 'End User', 'Blocker', 'Other'];
+const CONTACT_DOMAINS = ['Business', 'IT', 'Executive Leadership', 'Procurement', 'Finance', 'Legal', 'Other'];
 
 const KIND_STYLES = {
   Champion: 'bg-green-100 text-green-700',
@@ -14,6 +15,16 @@ const KIND_STYLES = {
   'End User': 'bg-slate-100 text-slate-700',
   Blocker: 'bg-red-100 text-red-700',
   Other: 'bg-slate-100 text-slate-600',
+};
+
+const DOMAIN_STYLES = {
+  Business: 'bg-blue-50 text-blue-700 border-blue-200',
+  IT: 'bg-cyan-50 text-cyan-700 border-cyan-200',
+  'Executive Leadership': 'bg-indigo-50 text-indigo-700 border-indigo-200',
+  Procurement: 'bg-amber-50 text-amber-700 border-amber-200',
+  Finance: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+  Legal: 'bg-slate-50 text-slate-700 border-slate-200',
+  Other: 'bg-slate-50 text-slate-600 border-slate-200',
 };
 
 function normaliseLinkedIn(url) {
@@ -67,6 +78,7 @@ export default function ContactsPanel({ lead }) {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-sm font-medium text-slate-900">{c.name}{c.role ? <span className="text-slate-500 font-normal"> · {c.role}</span> : null}</span>
+                    {c.domain && <span className={`text-xs px-1.5 py-0.5 rounded border ${DOMAIN_STYLES[c.domain] || 'bg-slate-50 text-slate-700 border-slate-200'}`}>{c.domain}</span>}
                     {c.kind && <span className={`text-xs px-1.5 py-0.5 rounded ${KIND_STYLES[c.kind] || 'bg-slate-100 text-slate-700'}`}>{c.kind}</span>}
                   </div>
                   <div className="flex items-center gap-3 mt-0.5 text-xs">
@@ -110,6 +122,7 @@ function ContactForm({ initial, onSave, onCancel }) {
     email: initial?.email || '',
     linkedin: initial?.linkedin || '',
     kind: initial?.kind || '',
+    domain: initial?.domain || '',
     notes: initial?.notes || '',
   });
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
@@ -123,6 +136,7 @@ function ContactForm({ initial, onSave, onCancel }) {
       email: form.email.trim(),
       linkedin: form.linkedin.trim(),
       kind: form.kind,
+      domain: form.domain,
       notes: form.notes.trim(),
     });
   };
@@ -136,11 +150,15 @@ function ContactForm({ initial, onSave, onCancel }) {
         <input value={form.role} onChange={e => set('role', e.target.value)} placeholder="Title / Role" className={cls} />
         <input type="email" value={form.email} onChange={e => set('email', e.target.value)} placeholder="email@example.com" className={cls} />
         <input value={form.linkedin} onChange={e => set('linkedin', e.target.value)} placeholder="linkedin.com/in/handle" className={cls} />
+        <select value={form.domain} onChange={e => set('domain', e.target.value)} className={cls}>
+          <option value="">— Function / Domain —</option>
+          {CONTACT_DOMAINS.map(d => <option key={d}>{d}</option>)}
+        </select>
         <select value={form.kind} onChange={e => set('kind', e.target.value)} className={cls}>
           <option value="">— Qualify nature —</option>
           {CONTACT_KINDS.map(k => <option key={k}>{k}</option>)}
         </select>
-        <textarea value={form.notes} onChange={e => set('notes', e.target.value)} placeholder="Notes (rapport, context, internal influence...)" rows={1} className={cls} />
+        <textarea value={form.notes} onChange={e => set('notes', e.target.value)} placeholder="Notes (rapport, context, internal influence...)" rows={1} className="col-span-2 w-full px-2.5 py-1.5 border border-slate-300 rounded text-sm focus:border-blue-500 focus:outline-none" />
       </div>
       <div className="flex justify-end gap-2">
         <button type="button" onClick={onCancel} className="px-2.5 py-1 text-xs text-slate-600 hover:bg-slate-100 rounded">Cancel</button>

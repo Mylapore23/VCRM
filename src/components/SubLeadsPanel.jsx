@@ -3,6 +3,7 @@ import { useApp } from '../context/AppContext';
 import { USERS, userById } from '../config/users';
 import { STAGES, PRIORITIES, StageBadge, PriorityBadge } from './Badges';
 import { canEdit, canViewFinancials, canDelete } from '../utils/permissions';
+import { scoreOpportunity, toneClasses } from '../utils/engagement';
 
 const OPEN_STAGES = new Set(['Prospect', 'Qualified', 'Proposal', 'Negotiation']);
 
@@ -86,6 +87,21 @@ export default function SubLeadsPanel({ lead }) {
                       <div className="flex items-center gap-2 mt-2 flex-wrap">
                         <StageBadge stage={s.stage} />
                         <PriorityBadge priority={s.priority} />
+                        {(() => {
+                          const eng = scoreOpportunity(lead, s);
+                          return (
+                            <span
+                              className={`text-xs px-2 py-0.5 rounded border ${toneClasses(eng.tone)}`}
+                              title={eng.contactCount === 0
+                                ? 'Link contacts to score engagement'
+                                : `Score ${eng.score} from ${eng.contactCount} contact${eng.contactCount === 1 ? '' : 's'}` +
+                                  (eng.domains.length ? ` · covers ${eng.domains.join(', ')}` : '') +
+                                  (eng.missing.length ? ` · missing ${eng.missing.join(', ')}` : '')}
+                            >
+                              Engagement: {eng.label} ({eng.score})
+                            </span>
+                          );
+                        })()}
                         <span className="text-xs text-slate-500">Owner: {userById(s.owner)?.name || '—'}</span>
                         {showFinancials && s.value ? <span className="text-xs font-medium text-slate-700">${Number(s.value).toLocaleString()}</span> : null}
                       </div>
