@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { USERS } from '../config/users';
-import { STAGES, PRIORITIES } from './Badges';
-import { canAssignVisibility, canViewFinancials } from '../utils/permissions';
+import { canAssignVisibility } from '../utils/permissions';
 
 export default function LeadForm({ initial, onSave, onCancel, currentUser }) {
   const [form, setForm] = useState(() => ({
@@ -11,9 +10,6 @@ export default function LeadForm({ initial, onSave, onCancel, currentUser }) {
     contactEmail: '',
     contactLinkedin: '',
     partner: '',
-    stage: 'Prospect',
-    priority: 'Medium',
-    value: '',
     owner: currentUser?.id || USERS[0].id,
     tags: '',
     ...initial,
@@ -32,12 +28,10 @@ export default function LeadForm({ initial, onSave, onCancel, currentUser }) {
     if (!form.company.trim()) return;
     onSave({
       ...form,
-      value: form.value ? Number(form.value) : undefined,
       tags: form.tags.split(',').map(t => t.trim()).filter(Boolean),
     });
   };
 
-  const showFinancials = canViewFinancials(currentUser);
   const showVisibility = canAssignVisibility(currentUser);
 
   return (
@@ -47,7 +41,8 @@ export default function LeadForm({ initial, onSave, onCancel, currentUser }) {
         onClick={e => e.stopPropagation()}
         className="bg-white text-slate-900 rounded-xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto"
       >
-        <h3 className="text-lg font-semibold mb-4">{initial?.id ? 'Edit Lead' : 'Add Lead'}</h3>
+        <h3 className="text-lg font-semibold mb-1">{initial?.id ? 'Edit Account' : 'Add Account'}</h3>
+        <p className="text-xs text-slate-500 mb-4">Accounts hold company info. Specific deals live as Opportunities inside the account.</p>
         <div className="space-y-3">
           <Field label="Company *"><input required value={form.company} onChange={e => set('company', e.target.value)} className={inputCls} /></Field>
           <Field label="Website"><input value={form.website} onChange={e => set('website', e.target.value)} className={inputCls} placeholder="https://example.com" /></Field>
@@ -62,26 +57,11 @@ export default function LeadForm({ initial, onSave, onCancel, currentUser }) {
             </div>
           </div>
           <Field label="Partner (if any)"><input value={form.partner} onChange={e => set('partner', e.target.value)} className={inputCls} placeholder="Partner / referral source" /></Field>
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="Stage">
-              <select value={form.stage} onChange={e => set('stage', e.target.value)} className={inputCls}>
-                {STAGES.map(s => <option key={s}>{s}</option>)}
-              </select>
-            </Field>
-            <Field label="Priority">
-              <select value={form.priority} onChange={e => set('priority', e.target.value)} className={inputCls}>
-                {PRIORITIES.map(p => <option key={p}>{p}</option>)}
-              </select>
-            </Field>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            {showFinancials && <Field label="Value ($)"><input type="number" value={form.value} onChange={e => set('value', e.target.value)} className={inputCls} /></Field>}
-            <Field label="Owner">
-              <select value={form.owner} onChange={e => set('owner', e.target.value)} className={inputCls}>
-                {USERS.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
-              </select>
-            </Field>
-          </div>
+          <Field label="Account Owner">
+            <select value={form.owner} onChange={e => set('owner', e.target.value)} className={inputCls}>
+              {USERS.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
+            </select>
+          </Field>
           <Field label="Tags (comma-separated)"><input value={form.tags} onChange={e => set('tags', e.target.value)} className={inputCls} /></Field>
           {showVisibility && (
             <div className="border-t border-slate-200 pt-3">

@@ -50,14 +50,32 @@ function loadInitial() {
       const data = JSON.parse(raw);
       // Backfill v2 fields on existing v1 data
       data.knowledgeRepo = data.knowledgeRepo || [];
-      data.leads = (data.leads || []).map(l => ({
-        ...l,
-        visibility: l.visibility || [],
-        contacts: l.contacts || [],
-        subLeads: l.subLeads || [],
-        reminders: l.reminders || [],
-        lessonsLearnt: { ...emptyLessons(), ...(l.lessonsLearnt || {}) },
-      }));
+      data.leads = (data.leads || []).map(l => {
+        const subLeads = (l.subLeads || []).map(s => ({ ...s, contactIds: s.contactIds || [] }));
+        // If the lead has legacy deal fields and no opportunities yet, migrate them.
+        if (subLeads.length === 0 && (l.value || l.stage)) {
+          subLeads.push({
+            id: uuid(),
+            title: 'Initial opportunity',
+            description: '',
+            stage: l.stage || 'Prospect',
+            priority: l.priority || 'Medium',
+            value: l.value,
+            owner: l.owner,
+            contactIds: [],
+            createdAt: l.createdAt || new Date().toISOString(),
+            updatedAt: l.updatedAt || new Date().toISOString(),
+          });
+        }
+        return {
+          ...l,
+          visibility: l.visibility || [],
+          contacts: l.contacts || [],
+          subLeads,
+          reminders: l.reminders || [],
+          lessonsLearnt: { ...emptyLessons(), ...(l.lessonsLearnt || {}) },
+        };
+      });
       return data;
     }
   } catch (e) {
@@ -281,16 +299,20 @@ export function AppProvider({ children }) {
       completedAt: now,
       completedBy: userId,
     };
-    const isWin = lead.stage === 'Closed Won';
+    const stages = (lead.subLeads || []).map(s => s.stage);
+    const anyWon = stages.includes('Closed Won');
+    const anyLost = stages.includes('Closed Lost');
     const theme = lead.tags?.[0] || 'General';
     const prosMd = (finalised.pros || []).map(p => `- ${p.text}`).join('\n') || '- (none)';
     const consMd = (finalised.cons || []).map(c => `- ${c.text}`).join('\n') || '- (none)';
-    const content = `## Outcome\n${finalised.outcome || '(no outcome recorded)'}\n\n## What Worked\n${prosMd}\n\n## What Didn't\n${consMd}\n\n## Recommendations\n${finalised.recommendations || '(none)'}\n\n## Synthesis\n${finalised.aiSynthesis || '(none)'}`;
+    const content = `## Situation\n${finalised.outcome || '(no outcome recorded)'}\n\n## What's Working\n${prosMd}\n\n## Challenges\n${consMd}\n\n## Recommendations\n${finalised.recommendations || '(none)'}\n\n## Synthesis\n${finalised.aiSynthesis || '(none)'}`;
+    const type = anyWon ? 'win_story' : anyLost ? 'loss_analysis' : 'insight';
+    const titlePrefix = type === 'win_story' ? 'Win' : type === 'loss_analysis' ? 'Loss' : 'Active learning';
     const knowledgeEntry = {
       id: uuid(),
-      title: `${isWin ? 'Win' : 'Loss'}: ${lead.company}`,
+      title: `${titlePrefix}: ${lead.company}`,
       pitchTheme: theme,
-      type: isWin ? 'win_story' : 'loss_analysis',
+      type,
       content,
       linkedLeads: [leadId],
       tags: lead.tags || [],

@@ -24,7 +24,7 @@ export default function Nav() {
         <nav className="flex gap-1 flex-1">
           {[
             ['/', 'Dashboard'],
-            ['/leads', 'Leads'],
+            ['/leads', 'Accounts'],
             ['/pitches', 'Pitches'],
             ['/knowledge', 'Knowledge'],
             ['/content', 'Content'],
@@ -46,7 +46,7 @@ export default function Nav() {
             onClick={() => setShowAdd(true)}
             className="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded-md text-sm font-medium"
           >
-            + Add Lead
+            + Add Account
           </button>
         )}
         {currentUser && (

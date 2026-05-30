@@ -2,7 +2,8 @@ import { useState, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { USERS, userById } from '../config/users';
-import { STAGES, PRIORITIES, StageBadge, PriorityBadge, LessonStatusBadge, ReminderFlag } from '../components/Badges';
+import { LessonStatusBadge, ReminderFlag } from '../components/Badges';
+import { leadPipelineValue } from '../utils/value';
 import IntelPanel from '../components/IntelPanel';
 import PitchEditor from '../components/PitchEditor';
 import VisibilityPanel from '../components/VisibilityPanel';
@@ -29,9 +30,12 @@ export default function LeadDetail() {
     );
   }
 
-  const closed = lead.stage === 'Closed Won' || lead.stage === 'Closed Lost';
-  const TABS = ['Overview', 'Sub-Leads', 'Reminders', 'Intel', 'Pitch', 'Lessons', 'Content'];
+  const subs = lead.subLeads || [];
+  const anyClosed = subs.some(s => s.stage === 'Closed Won' || s.stage === 'Closed Lost');
+  const TABS = ['Overview', 'Opportunities', 'Reminders', 'Intel', 'Pitch', 'Lessons', 'Content'];
   const flag = reminderFlag(lead);
+  const pipeline = leadPipelineValue(lead);
+  const showFinancials = canViewFinancials(currentUser);
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-6">
@@ -48,12 +52,11 @@ export default function LeadDetail() {
             )}
           </div>
           <div className="flex items-center gap-2 mt-2 flex-wrap">
-            <StageBadge stage={lead.stage} />
-            <PriorityBadge priority={lead.priority} />
-            {closed && <LessonStatusBadge status={lead.lessonsLearnt.status} />}
+            {subs.length > 0 && <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">{subs.length} opportunit{subs.length === 1 ? 'y' : 'ies'}</span>}
+            {showFinancials && pipeline > 0 && <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-50 text-green-700 border border-green-200">Pipeline ${pipeline.toLocaleString()}</span>}
+            {anyClosed && <LessonStatusBadge status={lead.lessonsLearnt.status} />}
             {lead.partner && <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-200">🤝 Partner: {lead.partner}</span>}
-            {(lead.subLeads?.length || 0) > 0 && <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">{lead.subLeads.length} sub-lead{lead.subLeads.length === 1 ? '' : 's'}</span>}
-            <span className="text-sm text-slate-500">· {lead.contact} · Owner: {userById(lead.owner)?.name}</span>
+            <span className="text-sm text-slate-500">· {lead.contact || 'No primary contact'} · Owner: {userById(lead.owner)?.name}</span>
           </div>
         </div>
         {canDelete(currentUser) && (
@@ -74,14 +77,14 @@ export default function LeadDetail() {
               onClick={() => setTab(t)}
               className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${tab === t ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-800'}`}
             >
-              {t}{t === 'Lessons' && closed && lead.lessonsLearnt.status === 'final' ? ' ✓' : ''}
+              {t}{t === 'Lessons' && lead.lessonsLearnt.status === 'final' ? ' ✓' : ''}
             </button>
           ))}
         </div>
       </div>
 
       {tab === 'Overview' && <OverviewTab lead={lead} updateLead={updateLead} currentUser={currentUser} />}
-      {tab === 'Sub-Leads' && <SubLeadsPanel lead={lead} />}
+      {tab === 'Opportunities' && <SubLeadsPanel lead={lead} />}
       {tab === 'Reminders' && <RemindersPanel lead={lead} />}
       {tab === 'Intel' && <IntelPanel lead={lead} />}
       {tab === 'Pitch' && (
@@ -102,7 +105,6 @@ export default function LeadDetail() {
 
 function OverviewTab({ lead, updateLead, currentUser }) {
   const editable = canEdit(lead, currentUser);
-  const showFinancials = canViewFinancials(currentUser);
   const [form, setForm] = useState({
     company: lead.company,
     website: lead.website || '',
@@ -110,9 +112,6 @@ function OverviewTab({ lead, updateLead, currentUser }) {
     contactEmail: lead.contactEmail || '',
     contactLinkedin: lead.contactLinkedin || '',
     partner: lead.partner || '',
-    stage: lead.stage,
-    priority: lead.priority,
-    value: lead.value || '',
     owner: lead.owner,
     tags: (lead.tags || []).join(', '),
   });
@@ -120,13 +119,10 @@ function OverviewTab({ lead, updateLead, currentUser }) {
   const set = (k, v) => { setForm(f => ({ ...f, [k]: v })); setSaved(false); };
 
   const save = () => {
-    const patch = {
+    updateLead(lead.id, {
       ...form,
       tags: form.tags.split(',').map(t => t.trim()).filter(Boolean),
-    };
-    if (showFinancials) patch.value = form.value ? Number(form.value) : undefined;
-    else delete patch.value;
-    updateLead(lead.id, patch);
+    });
     setSaved(true);
   };
 
@@ -134,6 +130,8 @@ function OverviewTab({ lead, updateLead, currentUser }) {
 
   return (
     <div className="bg-white border border-slate-200 rounded-lg p-6 max-w-2xl">
+      <h3 className="text-sm font-semibold text-slate-900 mb-1">Account Info</h3>
+      <p className="text-xs text-slate-500 mb-4">Stage, value and priority live on each Opportunity (see Opportunities tab).</p>
       <div className="grid grid-cols-2 gap-4">
         <L label="Company"><input readOnly={!editable} value={form.company} onChange={e => set('company', e.target.value)} className={cls} /></L>
         <L label="Website"><input readOnly={!editable} value={form.website} onChange={e => set('website', e.target.value)} className={cls} placeholder="https://example.com" /></L>
@@ -141,18 +139,7 @@ function OverviewTab({ lead, updateLead, currentUser }) {
         <L label="Primary Email"><input readOnly={!editable} value={form.contactEmail} onChange={e => set('contactEmail', e.target.value)} className={cls} /></L>
         <L label="Primary LinkedIn"><input readOnly={!editable} value={form.contactLinkedin} onChange={e => set('contactLinkedin', e.target.value)} className={cls} placeholder="linkedin.com/in/handle" /></L>
         <L label="Partner"><input readOnly={!editable} value={form.partner} onChange={e => set('partner', e.target.value)} className={cls} placeholder="Partner / referral source" /></L>
-        {showFinancials && <L label="Value ($)"><input readOnly={!editable} type="number" value={form.value} onChange={e => set('value', e.target.value)} className={cls} /></L>}
-        <L label="Stage">
-          <select disabled={!editable} value={form.stage} onChange={e => set('stage', e.target.value)} className={cls}>
-            {STAGES.map(s => <option key={s}>{s}</option>)}
-          </select>
-        </L>
-        <L label="Priority">
-          <select disabled={!editable} value={form.priority} onChange={e => set('priority', e.target.value)} className={cls}>
-            {PRIORITIES.map(p => <option key={p}>{p}</option>)}
-          </select>
-        </L>
-        <L label="Owner">
+        <L label="Account Owner">
           <select disabled={!editable} value={form.owner} onChange={e => set('owner', e.target.value)} className={cls}>
             {USERS.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
           </select>

@@ -8,9 +8,8 @@ import { LessonStatusBadge } from './Badges';
 export default function LessonsPanel({ lead }) {
   const { currentUser, updateLessons, finaliseLessons } = useApp();
   const { synthesizeLessons } = useAnthropicAI();
-  const closed = lead.stage === 'Closed Won' || lead.stage === 'Closed Lost';
   const final = lead.lessonsLearnt.status === 'final';
-  const editable = closed && !final && canEdit(lead, currentUser);
+  const editable = !final && canEdit(lead, currentUser);
 
   const [form, setForm] = useState(lead.lessonsLearnt);
   const [newPro, setNewPro] = useState('');
@@ -20,15 +19,6 @@ export default function LessonsPanel({ lead }) {
   const [saved, setSaved] = useState(false);
 
   useEffect(() => { setForm(lead.lessonsLearnt); }, [lead.id, lead.lessonsLearnt.status]);
-
-  if (!closed) {
-    return (
-      <div className="bg-amber-50 border border-amber-200 rounded-lg p-6 text-amber-800">
-        <p className="font-medium">Lessons Learnt unlocks when this lead is Closed Won or Closed Lost.</p>
-        <p className="text-sm mt-1">Current stage: <strong>{lead.stage}</strong></p>
-      </div>
-    );
-  }
 
   const set = (k, v) => { setForm(f => ({ ...f, [k]: v })); setSaved(false); };
   const addPro = () => { if (!newPro.trim()) return; set('pros', [...(form.pros || []), { id: uuid(), text: newPro.trim() }]); setNewPro(''); };
@@ -66,6 +56,10 @@ export default function LessonsPanel({ lead }) {
 
   return (
     <div className="space-y-5 max-w-3xl">
+      <div>
+        <h3 className="text-base font-semibold text-slate-900">Challenges & Lessons</h3>
+        <p className="text-xs text-slate-500 mt-0.5">Capture challenges, what's working, and lessons during the active account hunt — not just at close. Refresh anytime; finalise to lock and seed Knowledge Repo.</p>
+      </div>
       <div className="flex items-center gap-2">
         <LessonStatusBadge status={form.status} />
         {final && form.completedAt && (
@@ -75,13 +69,13 @@ export default function LessonsPanel({ lead }) {
 
       <section>
         <label className="block">
-          <span className="text-sm font-semibold text-slate-900">Outcome</span>
-          <textarea readOnly={ro} value={form.outcome} onChange={e => set('outcome', e.target.value)} rows={3} className={inputCls + ' mt-2'} placeholder="What happened with this opportunity?" />
+          <span className="text-sm font-semibold text-slate-900">Current Situation / Outcome</span>
+          <textarea readOnly={ro} value={form.outcome} onChange={e => set('outcome', e.target.value)} rows={3} className={inputCls + ' mt-2'} placeholder="Where the account stands today, what's happened, key context." />
         </label>
       </section>
 
       <section>
-        <h4 className="text-sm font-semibold text-slate-900 mb-2">What Worked Well (Pros)</h4>
+        <h4 className="text-sm font-semibold text-slate-900 mb-2">What's Working (Pros)</h4>
         <ul className="space-y-1 mb-2">
           {(form.pros || []).map(p => (
             <li key={p.id} className="flex items-center gap-2 bg-green-50 border border-green-200 rounded px-3 py-1.5 text-sm">
@@ -99,7 +93,7 @@ export default function LessonsPanel({ lead }) {
       </section>
 
       <section>
-        <h4 className="text-sm font-semibold text-slate-900 mb-2">What Didn't Work (Cons)</h4>
+        <h4 className="text-sm font-semibold text-slate-900 mb-2">Challenges to Address / Avoid (Cons)</h4>
         <ul className="space-y-1 mb-2">
           {(form.cons || []).map(c => (
             <li key={c.id} className="flex items-center gap-2 bg-red-50 border border-red-200 rounded px-3 py-1.5 text-sm">
@@ -118,8 +112,8 @@ export default function LessonsPanel({ lead }) {
 
       <section>
         <label className="block">
-          <span className="text-sm font-semibold text-slate-900">Recommendations</span>
-          <textarea readOnly={ro} value={form.recommendations} onChange={e => set('recommendations', e.target.value)} rows={3} className={inputCls + ' mt-2'} placeholder="What should we do differently next time?" />
+          <span className="text-sm font-semibold text-slate-900">Recommendations / Next Plays</span>
+          <textarea readOnly={ro} value={form.recommendations} onChange={e => set('recommendations', e.target.value)} rows={3} className={inputCls + ' mt-2'} placeholder="What to do next, what to repeat, what to avoid for the next refresher / similar accounts." />
         </label>
       </section>
 

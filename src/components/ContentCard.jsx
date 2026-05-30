@@ -51,6 +51,7 @@ export default function ContentCard({ item, onEdit, onDelete }) {
           ))}
         </div>
         <div className="flex gap-3 text-xs mt-auto">
+          <button onClick={() => setOpen(true)} className="text-blue-600 hover:underline font-medium">Preview</button>
           <button onClick={onEdit} className="text-blue-600 hover:underline">Edit</button>
           {att && <a href={att.dataUrl} download={att.name} className="text-blue-600 hover:underline">Download</a>}
           {onDelete && <button onClick={onDelete} className="text-red-600 hover:underline">Delete</button>}
